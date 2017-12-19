@@ -1,0 +1,6 @@
+embeddings/*
+preprocess/*
+results/*
+twitter-datasets/*
+.DS_Store
+.idea/*
