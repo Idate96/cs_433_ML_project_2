@@ -24,6 +24,8 @@ def sequence2tensor(sequence, vocab, targets=None):
             if targets is not None:
                 targets_parsed.append(targets[i])
             vectorized_seq.append(word_list)
+        else:
+            vectorized_seq.append([1])
 
     seq_lengths = torch.LongTensor(list(map(len, vectorized_seq)))
     seq_tensor = torch.zeros((len(vectorized_seq), seq_lengths.max())).type(torch.LongTensor)

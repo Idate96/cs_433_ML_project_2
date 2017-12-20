@@ -40,6 +40,9 @@ def train(model, dataloader_train, train_lengths, config, dataloader_val=None,
             loss_value = loss(logits, labels_var)
 
             loss_value.backward()
+
+            nn.utils.clip_grad_norm(filter(lambda p: p.requires_grad, model.parameters()), 10.0)
+
             optimizer.step()
 
             accuracy = compute_accuracy(logits, labels_var)
