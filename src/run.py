@@ -1,8 +1,10 @@
 from src.nn_modules.sentiment import *
-from src.nn_modules.models import *
+from src.nn_modules.models import LinearBCEModel
+from src.nn_modules.data_utils import *
 
 
 def main():
+    print("staring")
     # hyperparameters
     embedding_dim = 50
     batch_size = 500
@@ -19,7 +21,7 @@ def main():
     # learning algorithm
 
     print("preparing model...")
-    model = BCEModel(embedding_dim, learning_rate, l2_reg=10**-3, number_neurons=256)
+    model = LinearBCEModel(embedding_dim, learning_rate, l2_reg=10**-3)
     print("model loaded. Start training data...")
     train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model, dataloader_train,
                                                                                            dataloader_val, epochs_num)
