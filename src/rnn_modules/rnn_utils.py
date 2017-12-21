@@ -2,6 +2,7 @@ import csv
 import os
 import numpy as np
 import torch
+import pickle
 from torch.autograd import Variable
 
 
@@ -169,3 +170,42 @@ def resume(model, filename):
     model.load_state_dict(checkpoint['state_dict'])
     model.optimizer.load_state_dict(checkpoint['optimizer'])
     return model, epoch
+
+
+def load_train_dataset(use_all_data=False):
+    """
+    Loads the dataset and generate corresponding labels, then it shuffles them
+    :param use_all_data (bool) : indicates if all the dataset is used
+    :return: shuffled_dataset (list) : dataset containing the sentences
+            shuffled_lables (np.array): labels of the dataset,
+                                        0 relate to negative and 1 to positive
+    """
+    if use_all_data:
+        filename_pos = 'train_pos_full.txt'
+        filename_neg = 'train_neg_full.txt'
+    else:
+        filename_pos = 'train_pos.txt'
+        filename_neg = 'train_neg.txt'
+
+    dataset_pos = parse_samples(load_samples(filename_pos))
+    labels_pos = np.ones(len(dataset_pos))
+    dataset_neg = parse_samples(load_samples(filename_neg))
+    labels_neg = np.zeros(len(dataset_neg))
+    # join
+    dataset = dataset_pos + dataset_neg
+    labels = np.vstack((labels_pos, labels_neg)).flatten()
+
+    return dataset, labels
+
+def load_params(embedding_dim=20, use_all_data=False, directory='twitter-datasets'):
+    """
+    Load parameter necessary for training.
+    :param use_all_data (bool)
+    :param directory: directory of data
+    :return: embeddings, vocabulary, dataset, labels
+    """
+    embeddings = np.load('embeddings/embeddings_' + str(embedding_dim) + '.npy')
+    with open(directory + '/' + 'vocab.pkl', 'rb') as file:
+        vocabulary = pickle.load(file)
+    dataset, labels = load_train_dataset(use_all_data)
+    return embeddings, vocabulary, dataset, labels

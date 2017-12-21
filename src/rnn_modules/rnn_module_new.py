@@ -8,7 +8,7 @@ import torch
 from src.nn_modules import data_utils
 from src.rnn_modules.rnn_train import train
 from src.rnn_modules.rnn_utils import sequence2tensor, generate_dataloader, \
-    Config, save_data, create_submission_rnn, load_test_data
+    Config, save_data, create_submission_rnn, load_test_data, load_params
 
 
 class RNNClassifier(nn.Module):
@@ -41,10 +41,10 @@ class RNNClassifier(nn.Module):
 def run():
 
     # get features and labels of tweets
-    embedding_dim = 20
+    embedding_dim = 200
     print("Loading data ... ")
-    embeddings, vocabulary, dataset, labels = data_utils.load_params(embedding_dim,
-                                                                     use_all_data=True)
+    embeddings, vocabulary, dataset, labels = load_params(embedding_dim,
+                                                                     use_all_data=False)
 
     # embeddings = np.load('preprocess/embeddings.npy')
     # print(np.shape(embeddings))
@@ -55,15 +55,15 @@ def run():
 
     # hyperparameters
     config = Config(batch_size=500, embedding_dim=embedding_dim, vocab_size=len(vocabulary),
-                    learning_rate=10**-3, epochs_num=6, directory='results/rnn_h100_e200_l3')
+                    learning_rate=10**-3, epochs_num=5, directory='results/rnn_h256_e200_l3')
     print("Vectorizing sentences ...")
     dataset_tensor, lengths_tensor, parsed_targets = sequence2tensor(dataset, vocabulary, labels)
 
     dataloader_train, lengths_train, dataloader_test, lengths_test = generate_dataloader(
         dataset_tensor, lengths_tensor, parsed_targets, config.batch_size)
 
-    model = RNNClassifier(hidden_dim=20, config=config, embeddings=embeddings,
-                          label='rnn_h20_e20_all ')
+    model = RNNClassifier(hidden_dim=256, config=config, embeddings=embeddings,
+                          label='rnn_h256_e200_l3')
 
     train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(
         model, dataloader_train, lengths_train, config, dataloader_test, lengths_test)
