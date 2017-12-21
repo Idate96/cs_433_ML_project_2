@@ -3,6 +3,7 @@ import os
 import numpy as np
 import torch
 import pickle
+import torch.utils.data
 from torch.autograd import Variable
 
 
@@ -55,7 +56,6 @@ def generate_dataloader(dataset_tensor, lengths_tensor,  labels, batch_size, rat
     labels_tensor_val = labels_tensor[val_indeces]
     lengths_tensor_val = lengths_tensor[val_indeces]
 
-
     tensor_dataset_train = torch.utils.data.TensorDataset(dataset_tensor_train,
                                                           labels_tensor_train)
     tensor_lenghts_train = torch.utils.data.TensorDataset(lengths_tensor_train,
@@ -84,7 +84,7 @@ def sort_sequences(seq_tensor, seq_lengths, labels=None):
 
 class Config(object):
     def __init__(self, batch_size, embedding_dim, vocab_size, learning_rate, epochs_num,
-                 resume=False, directory='results'):
+                 resume=False, directory='results', checkpoint_name=''):
         self.batch_size = batch_size
         self.embedding_dim = embedding_dim
         self.vocab_size = vocab_size
@@ -92,6 +92,7 @@ class Config(object):
         self.epochs_num = epochs_num
         self.resume = resume
         self.directory = directory
+        self.checkpoint_name = checkpoint_name
 
 
 def create_submission_rnn(model, seq_tensor, seq_lengths, name):
@@ -149,27 +150,30 @@ def load_samples(filename, directory='twitter-datasets'):
 
 
 def load_test_data():
-    filaname = 'test_data.txt'
+    filaname = 'test_data_NOnum.txt'
     dataset_test = parse_samples(load_samples(filaname))
     return dataset_test
 
 
 def save_checkpoint(model, optimizer, epoch, filename):
+    if not os.path.exists(filename):
+        os.makedirs(filename)
+
     state_dict = {'epoch': epoch + 1,
                   'state_dict': model.state_dict(),
-                  'optimizer' : optimizer.state_dict()}
+                  'optimizer': optimizer.state_dict()}
     torch.save(state_dict, filename)
 
 
-def resume(model, filename):
+def resume(model, optimizer, filename):
     try:
         checkpoint = torch.load(filename, map_location=lambda storage, loc: storage)
     except FileNotFoundError as e:
         print("Checkpoint not found")
     epoch = checkpoint['epoch']
     model.load_state_dict(checkpoint['state_dict'])
-    model.optimizer.load_state_dict(checkpoint['optimizer'])
-    return model, epoch
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    return model, optimizer, epoch
 
 
 def load_train_dataset(use_all_data=False):

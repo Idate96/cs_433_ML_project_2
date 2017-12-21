@@ -2,9 +2,7 @@ import numpy as np
 import torch
 import torch.utils.data
 from torch.autograd import Variable
-
 from src.nn_modules import data_utils
-
 np.seterr(all='warn', over='raise')
 
 def embed_sentence(sentence, vocabulary, embedding):
@@ -44,15 +42,19 @@ def extract_features(embedded_sentence):
 
 
 def embed_dataset(dataset, vocabulary, embeddings):
+    """Embeds the dataset."""
     embedded_dataset = []
     for sentence in dataset:
         embedded_dataset.append(embed_sentence(sentence, vocabulary, embeddings))
     return embedded_dataset
 
 
-
-
 def compute_dataset_features(dataset, vocabulary, embeddings):
+    """
+    Computes the features for the entire dataset
+    :param dataset: list of sentences
+    :return: embedded dataset
+    """
     dataset_features = np.zeros((len(dataset), np.shape(embeddings)[1]))
     for i, sentence in enumerate(dataset):
         dataset_features[i] = extract_features(embed_sentence(sentence, vocabulary, embeddings))
@@ -60,6 +62,10 @@ def compute_dataset_features(dataset, vocabulary, embeddings):
 
 
 def train(model, dataloader_train, dataloader_val=None, num_epochs=10):
+    """
+    Main training procedure
+    :return: losses and accuracies
+    """
     iter_counter = 0
     current_loss = 0
 
@@ -105,6 +111,9 @@ def train(model, dataloader_train, dataloader_val=None, num_epochs=10):
 
 
 def test(model, dataloader):
+    """
+    Evaluates the model on a dataset
+    """
     dataset = Variable(dataloader.dataset.data_tensor, requires_grad=False)
     target = Variable(dataloader.dataset.target_tensor.type(torch.FloatTensor), requires_grad=False)
     output = model(dataset)
@@ -119,20 +128,3 @@ def compute_accuracy(predictions, target):
 
 def predict(output):
     return output > 0.5
-
-
-if __name__ == '__main__':
-    embeddings, vocabulary, dataset, labels = data_utils.load_params()
-    # embedded_dataset = embed_dataset(dataset, vocabulary, embeddings)
-    vectorized_seq = process_sentence(dataset[:2], vocabulary)
-    seq_lengths = torch.LongTensor(list(map(len, vectorized_seq)))
-    seq_tensor = Variable(torch.zeros((len(vectorized_seq), seq_lengths.max()))).long()
-    for idx, (seq, seqlen) in enumerate(zip(vectorized_seq, seq_lengths)):
-        seq_tensor[idx, :seqlen] = torch.LongTensor(seq)
-    # SORT YOUR TENSORS BY LENGTH!
-    seq_lengths, perm_idx = seq_lengths.sort(0, descending=True)
-    seq_tensor = seq_tensor[perm_idx]
-
-    # utils.rnn lets you give (B,L,D) tensors where B is the batch size, L is the maxlength, if you use batch_first=True
-    # Otherwise, give (L,B,D) tensors
-    seq_tensor = seq_tensor.transpose(0, 1)

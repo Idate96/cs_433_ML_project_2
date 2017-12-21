@@ -2,6 +2,9 @@ from torch import nn
 from torch import optim
 
 class BCEModel(nn.Module):
+    """
+    Two layer neural network
+    """
     def __init__(self, embedding_dims, learning_rate=10**-3, l2_reg=10**-2, number_neurons=256):
         super().__init__()
         self.l2_reg = l2_reg
@@ -27,6 +30,7 @@ class BCEModel(nn.Module):
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
 
 class LinearBCEModel(nn.Module):
+    """Linear classifier"""
     def __init__(self, embedding_dims, learning_rate=10**-3, l2_reg=10**-3):
         super().__init__()
         self.l2_reg = l2_reg
@@ -37,7 +41,7 @@ class LinearBCEModel(nn.Module):
         self.loss = nn.BCELoss()
         self.optimizer = None
         self.name = (str(type(self).__name__) + "_lr_" + str(learning_rate) + "_embdim_" + str(embedding_dims) +
-                        "_l2_" + str(self.l2_reg))
+                        "_l2_" + str(self.l2_reg)+ 'Albi')
 
 
     def forward(self, input):
@@ -47,6 +51,7 @@ class LinearBCEModel(nn.Module):
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate, weight_decay=self.l2_reg)
 
 class SingleLayerBCEModel(nn.Module):
+    """Single layer neural network"""
     def __init__(self, embedding_dims, learning_rate=10**-3, l2_reg=10**-3, number_neurons=1024):
         super().__init__()
         self.model = nn.Sequential(

@@ -2,5 +2,6 @@ embeddings/*
 preprocess/*
 results/*
 twitter-datasets/*
+twitter-datasets-pp/*
 .DS_Store
 .idea/*

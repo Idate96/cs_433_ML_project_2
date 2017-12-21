@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import sys, os
 random.seed = 10
-from src.nn_modules import sentiment
+from src.nn_modules import train_utils
 # encoding=utf8
 import os
 import matplotlib.pyplot as plt
@@ -18,11 +18,6 @@ def load_vocabulary(directory='twitter-datasets'):
         vocab = pickle.load(f)
     return vocab
 
-
-def load_samples(filename, directory='twitter-datasets'):
-    with open(directory + '/' + filename, encoding="utf-8") as file:
-        dataset = file.readlines()
-    return dataset
 
 
 def parse_samples(dataset):
@@ -38,7 +33,7 @@ def parse_samples(dataset):
     return parsed_dataset
 
 
-def load_train_dataset(use_all_data=False):
+def load_train_dataset(loaded_sample_pos, loaded_sample_neg):
     """
     Loads the dataset and generate corresponding labels, then it shuffles them
     :param use_all_data (bool) : indicates if all the dataset is used
@@ -46,37 +41,40 @@ def load_train_dataset(use_all_data=False):
             shuffled_lables (np.array): labels of the dataset,
                                         0 relate to negative and 1 to positive
     """
-    if use_all_data:
-        filename_pos = 'train_pos_full.txt'
-        filename_neg = 'train_neg_full.txt'
-    else:
-        filename_pos = 'train_pos.txt'
-        filename_neg = 'train_neg.txt'
 
-    dataset_pos = parse_samples(load_samples(filename_pos))
+
+    dataset_pos = parse_samples(loaded_sample_pos)
     labels_pos = np.ones(len(dataset_pos))
-    dataset_neg = parse_samples(load_samples(filename_neg))
+    print(np.shape(labels_pos))
+    dataset_neg = parse_samples(loaded_sample_neg)
     labels_neg = np.zeros(len(dataset_neg))
+    print(np.shape(labels_neg))
     # join
     dataset = dataset_pos + dataset_neg
     labels = np.vstack((labels_pos, labels_neg)).flatten()
 
     return dataset, labels
 
+def load_samples(filename, directory='twitter-datasets-pp'):
+    with open(directory + '/' + filename, encoding="utf-8") as file:
+        dataset = file.readlines()
+    return dataset
+
 def load_test_data():
-    filaname = 'test_data.txt'
+    filaname = 'test_data_NOnum.txt'
     dataset_test = parse_samples(load_samples(filaname))
     return dataset_test
 
-def load_params(embedding_dim=20, use_all_data=False, directory='twitter-datasets'):
+
+def load_params(use_all_data=False, embeddings_dir='embeddings', embeddings_name='embeddings', vocab_directory='twitter-datasets'):
     """
     Load parameter necessary for training.
     :param use_all_data (bool)
     :param directory: directory of data
     :return: embeddings, vocabulary, dataset, labels
     """
-    embeddings = np.load('embeddings/embeddings_' + str(embedding_dim) + '.npy')
-    with open(directory + '/' + 'vocab.pkl', 'rb') as file:
+    embeddings = np.load(embeddings_dir + '/' + embeddings_name)
+    with open(vocab_directory + '/' + 'vocab.pkl', 'rb') as file:
         vocabulary = pickle.load(file)
     dataset, labels = load_train_dataset(use_all_data)
     return embeddings, vocabulary, dataset, labels
@@ -185,9 +183,9 @@ def create_csv_submission(model, dataset_features, name):
     tensor_features = torch.FloatTensor(dataset_features)
     dataset = Variable(tensor_features, requires_grad=False)
     output = model(dataset)
-    y_pred = sentiment.predict(output.data).numpy()
+    y_pred = train_utils.predict(output.data).numpy()
     y_pred = np.where(y_pred == 0, -1, 1)
-    with open( name + "/" + "submission_file", 'w') as csvfile:
+    with open( name + "/" + "submission_file.csv", 'w') as csvfile:
         fieldnames = ['Id', 'Prediction']
         writer = csv.DictWriter(csvfile, delimiter=",", fieldnames=fieldnames)
         writer.writeheader()
@@ -202,9 +200,3 @@ def average_sentece_length(dataset):
     return average, max(lengths)
 
 
-if __name__ == '__main__':
-    load_vocabulary()
-    dataset = load_samples('train_neg.txt')
-    parse_samples(dataset)
-    embeddings, vocabulary, dataset, labels = load_params()
-    print(average_sentece_length(dataset))
